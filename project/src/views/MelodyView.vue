@@ -1,25 +1,21 @@
 <template>
-  <div class="melody">
-    <p>譜面: {{score}}</p>
+  <v-container class="melody">
 
-    <!--
-    <div class="paragraph">
-        <input type="button" value="ド" @click="ring(48,1)">
-        <input type="button" value="レ" @click="ring(50,1)">
-        <input type="button" value="ミ" @click="ring(52,1)">
-        <input type="button" value="ファ" @click="ring(53,1)">
-        <input type="button" value="ソ" @click="ring(55,1)">
-        <input type="button" value="ラ" @click="ring(57,1)">
-        <input type="button" value="シ" @click="ring(59,1)">
-        <input type="button" value="ド" @click="ring(60,1)">
-    </div>
-    -->
+    <v-card class="mt-4">
+        <v-card-subtitle class="pb-1">譜面</v-card-subtitle>
+        <v-card-text>{{score}}</v-card-text>
 
-    <div class="paragraph">
-        <input type="button" value="演奏" @click="play">
-        <input type="button" value="停止" @click="stop">
-    </div>
-  </div>
+        <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn color="secondary" @click="stop">停止</v-btn>
+            <v-btn color="primary" @click="play">
+                <v-icon small>mdi-music</v-icon>
+                <span class="font-weight-bold ml-1">演奏</span>
+            </v-btn>
+        </v-card-actions>
+    </v-card>
+
+  </v-container>
 </template>
 
 <script lang="ts">
@@ -162,8 +158,5 @@ export default class extends Vue {
 </script>
 
 <style scoped>
-.paragraph {
-    margin-top: 4px;
-}
 </style>
 

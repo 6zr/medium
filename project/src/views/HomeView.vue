@@ -1,23 +1,16 @@
 <template>
-  <div class="home">
-    <HelloWorld msg="medium"/>
-    <p>
-      <router-link to="/about">hoge</router-link>
-    </p>
-    <p>
-      <router-link to="/melody">melody</router-link>
-    </p>
-  </div>
+  <hello-world msg="medium" />
 </template>
 
 <script lang="ts">
-import { Component, Vue } from 'vue-property-decorator';
-import HelloWorld from '@/components/HelloWorld.vue'; // @ is an alias to /src
+  import Vue from 'vue'
+  import HelloWorld from '../components/HelloWorld.vue'
 
-@Component({
-  components: {
-    HelloWorld,
-  },
-})
-export default class HomeView extends Vue {}
+  export default Vue.extend({
+    name: 'Home',
+
+    components: {
+      HelloWorld,
+    },
+  })
 </script>

@@ -2,7 +2,6 @@ import qs from 'qs';
 import Vue from 'vue';
 import VueRouter, { RouteConfig } from 'vue-router';
 import HomeView from '../views/HomeView.vue';
-import AboutView from '../views/AboutView.vue';
 import MelodyView from '../views/MelodyView.vue';
 
 Vue.use(VueRouter)
@@ -11,10 +10,6 @@ const routes: Array<RouteConfig> = [
   {
     path: '/',
     component: HomeView,
-  },
-  {
-    path: '/about',
-    component: AboutView,
   },
   {
     path: '/melody',
