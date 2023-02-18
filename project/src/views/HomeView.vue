@@ -1,7 +1,12 @@
 <template>
   <div class="home">
-    <img alt="Vue logo" src="../assets/logo.png">
-    <HelloWorld msg="Welcome to Your Vue.js + TypeScript App"/>
+    <HelloWorld msg="medium"/>
+    <p>
+      <router-link to="/about">hoge</router-link>
+    </p>
+    <p>
+      <router-link to="/melody">melody</router-link>
+    </p>
   </div>
 </template>
 
