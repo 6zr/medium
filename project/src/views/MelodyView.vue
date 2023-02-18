@@ -30,6 +30,8 @@ const scaleList = [
     { scale: 'ソ', node: 55 },
     { scale: 'ラ', node: 57 },
     { scale: 'シ', node: 59 },
+    // { scale: 'ド', node: 60 },
+    { scale: 'モ', node: 64 }, // ミ相当
 ];
 
 // https://qiita.com/APO/items/883f7eb250f17c36473a
@@ -102,7 +104,7 @@ export default class extends Vue {
         len: number,
     }[] {
         const separetor = '/';
-        const str = this.score.replaceAll(/(ド|レ|ミ|ファ|ソ|ラ|シ|・)/g, `${separetor}$1`)
+        const str = this.score.replaceAll(/(ド|レ|ミ|ファ|ソ|ラ|シ|モ|・)/g, `${separetor}$1`)
 
         const arr: string[] = str.split(separetor);
 
@@ -113,7 +115,7 @@ export default class extends Vue {
         return arr
             .filter(x => x != null && x !== '')
             .map(x => ({
-              scale: x.match(/(^ド|^レ|^ミ|^ファ|^ソ|^ラ|^シ|^・)/)![0],
+              scale: x.match(/(^ド|^レ|^ミ|^ファ|^ソ|^ラ|^シ|^モ|^・)/)![0],
               len: (x.match(/ー/g) || []).length + 1,
             }))
         ;
