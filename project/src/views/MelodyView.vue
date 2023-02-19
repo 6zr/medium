@@ -2,7 +2,7 @@
   <v-container class="melody">
 
     <v-card class="mt-4">
-        <v-card-subtitle class="pb-1">譜面</v-card-subtitle>
+        <v-card-subtitle class="pb-1">音階 [{{scale}}]</v-card-subtitle>
         <v-card-text>{{score}}</v-card-text>
 
         <v-card-actions>
@@ -21,16 +21,55 @@
 import { Component, Vue } from 'vue-property-decorator';
 import * as Tone from 'tone'; // @ is an alias to /src
 
-const scaleList = [
-    { scale: 'ド',   value: 'C4' },
-    { scale: 'レ',   value: 'D4' },
-    { scale: 'ミ',   value: 'E4' },
-    { scale: 'ファ', value: 'F4' },
-    { scale: 'ソ',   value: 'G4' },
-    { scale: 'ラ',   value: 'A4' },
-    { scale: 'シ',   value: 'B4' },
-    { scale: 'モ',   value: 'E5' }, // ミ相当
-];
+type Scale = {
+    scale: string;
+    value: string;
+};
+
+const allScaleList: {
+    [key: string]: Scale[],
+} = {
+    '通常': [
+        { scale: 'ド',   value: 'C4' },
+        { scale: 'レ',   value: 'D4' },
+        { scale: 'ミ',   value: 'E4' },
+        { scale: 'ファ', value: 'F4' },
+        { scale: 'ソ',   value: 'G4' },
+        { scale: 'ラ',   value: 'A4' },
+        { scale: 'シ',   value: 'B4' },
+        { scale: 'モ',   value: 'E5' }, // ミ相当
+    ],
+    '琉球': [
+        { scale: 'ド',   value: 'C4' },
+        { scale: 'レ',   value: 'E4' }, // 本来は無いのでミと同じにしておく
+        { scale: 'ミ',   value: 'E4' },
+        { scale: 'ファ', value: 'F4' },
+        { scale: 'ソ',   value: 'G4' },
+        { scale: 'ラ',   value: 'B4' }, // 本来は無いのでシと同じにしておく
+        { scale: 'シ',   value: 'B4' },
+        { scale: 'モ',   value: 'E5' }, // ミ相当
+    ],
+    'ジプシー': [
+        { scale: 'ド',   value: 'C4' },
+        { scale: 'レ',   value: 'C#4' },
+        { scale: 'ミ',   value: 'E4' },
+        { scale: 'ファ', value: 'F4' },
+        { scale: 'ソ',   value: 'G4' },
+        { scale: 'ラ',   value: 'G#4' },
+        { scale: 'シ',   value: 'B4' },
+        { scale: 'モ',   value: 'E5' }, // ミ相当
+    ],
+    'アラビア': [
+        { scale: 'ド',   value: 'C4' },
+        { scale: 'レ',   value: 'D4' },
+        { scale: 'ミ',   value: 'D#4' },
+        { scale: 'ファ', value: 'F#4' },
+        { scale: 'ソ',   value: 'G#4' },
+        { scale: 'ラ',   value: 'B4' }, // 本来は無いのでシと同じにしておく
+        { scale: 'シ',   value: 'B4' },
+        { scale: 'モ',   value: 'E5' }, // ミ相当
+    ],
+};
 
 const lenList = [
     { len: 1, value: '8n' },
@@ -42,14 +81,25 @@ const lenList = [
 
 @Component
 export default class extends Vue {
+    get scale() {
+        if (typeof this.$route.query.scale !== 'string') {
+            return '通常';
+        }
+        if (!Object.keys(allScaleList).includes(this.$route.query.scale)) {
+            return '通常';
+        }
+        return this.$route.query.scale;
+    }
 
-    audio: HTMLAudioElement | null = null;
+    get scaleList() {
+        return allScaleList[this.scale];
+    }
 
     tone() {
         const synth = new Tone.Synth().toDestination();
 
         const melodyList = this.scoreInner.map((x) => ({
-            scale: (scaleList.find(y => x.scale === y.scale))?.value,
+            scale: (this.scaleList.find(y => x.scale === y.scale))?.value,
             len: (lenList.find(y => x.len === y.len))?.value || '16n',
         }));
 
