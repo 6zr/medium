@@ -51,8 +51,6 @@ const allScaleList: {
         { scale:  'ソ↑', value: 'G5' },
         { scale:  'ラ↑', value: 'A5' },
         { scale:  'シ↑', value: 'B5' },
-
-        { scale: 'モ',  value: 'E5' },
     ],
     '琉球': [
         { scale:  'ド↓', value: 'C3' },
@@ -76,8 +74,6 @@ const allScaleList: {
         { scale:  'ソ↑', value: 'G5' },
         { scale:  'ラ↑', value: 'B5' },
         { scale:  'シ↑', value: 'B5' },
-
-        { scale: 'モ',  value: 'E5' }, // ミ相当
     ],
     'ジプシー': [
         { scale:  'ド↓', value:  'C3' },
@@ -101,8 +97,6 @@ const allScaleList: {
         { scale:  'ソ↑', value:  'G5' },
         { scale:  'ラ↑', value: 'G#5' },
         { scale:  'シ↑', value:  'B5' },
-
-        { scale: 'モ',  value: 'E5' }, // ミ相当
     ],
     'アラビア': [
         { scale:  'ド↓', value:  'C3' },
@@ -126,8 +120,6 @@ const allScaleList: {
         { scale:  'ソ↑', value: 'G#5' },
         { scale:  'ラ↑', value:  'B5' },
         { scale:  'シ↑', value:  'B5' },
-
-        { scale: 'モ',   value: 'E5' }, // ミ相当
     ],
     'ヨナ抜き短調': [
         { scale:  'ド↓', value:  'C3' },
@@ -151,8 +143,6 @@ const allScaleList: {
         { scale:  'ソ↑', value:  'G5' },
         { scale:  'ラ↑', value: 'G#5' },
         { scale:  'シ↑', value: 'G#5' },
-
-        { scale: 'モ',   value: 'D#5' }, // ミ相当
     ],
     '宮調式': [
         { scale:  'ド↓', value: 'C3' },
@@ -176,8 +166,6 @@ const allScaleList: {
         { scale:  'ソ↑', value: 'G5' },
         { scale:  'ラ↑', value: 'A5' },
         { scale:  'シ↑', value: 'A5' },
-
-        { scale: 'モ',   value: 'E5' }, // ミ相当
     ],
     'メジャーブルース': [
         { scale:  'ド↓', value:  'C3' },
@@ -201,8 +189,6 @@ const allScaleList: {
         { scale:  'ソ↑', value:  'G5' },
         { scale:  'ラ↑', value:  'A5' },
         { scale:  'シ↑', value:  'A5' },
-
-        { scale: 'モ',   value: 'D#5' }, // ミ相当
     ],
     'マイナーブルース': [
         { scale:  'ド↓', value:  'C3' },
@@ -226,8 +212,6 @@ const allScaleList: {
         { scale:  'ソ↑', value:  'G5' },
         { scale:  'ラ↑', value: 'A#5' },
         { scale:  'シ↑', value: 'A#5' },
-
-        { scale: 'モ',   value: 'F5' }, // ミ相当
     ],
 };
 
@@ -249,6 +233,7 @@ const hankaku: {
     'ｿ': 'ソ',
     'ﾗ': 'ラ',
     'ｼ': 'シ',
+    'ﾓ': 'モ',
     ',': '・',
 };
 
@@ -273,10 +258,15 @@ export default class extends Vue {
 
         console.log(this.scoreInner);
 
-        const melodyList = this.scoreInner.map((x) => ({
-            scale: (this.scaleList.find(y => x.scale === y.scale))?.value,
-            len: (lenList.find(y => x.len === y.len))?.value || '16n',
-        }));
+        const values = this.scaleList.map(x => x.value);
+        const mo = values[Math.floor(Math.random() * values.length)];
+
+        const melodyList = this.scoreInner.map((x) => {
+            const isMo = x.scale.startsWith('モ');
+            const scale = isMo? mo : (this.scaleList.find(y => x.scale === y.scale))?.value;
+            const len = (lenList.find(y => x.len === y.len))?.value || '16n';
+            return { scale, len };
+        });
 
         let time = Tone.now();
         melodyList.forEach((item) => {
@@ -299,13 +289,13 @@ export default class extends Vue {
         len: number,
     }[] {
         const separetor = '/';
-        const str = this.score.replaceAll(/(ド|レ|ミ|ファ|ソ|ラ|シ|モ|ﾄﾞ|ﾚ|ﾐ|ﾌｧ|ｿ|ﾗ|ｼ|・|,)/g, `${separetor}$1`)
+        const str = this.score.replaceAll(/(ド|レ|ミ|ファ|ソ|ラ|シ|モ|ﾄﾞ|ﾚ|ﾐ|ﾌｧ|ｿ|ﾗ|ｼ|ﾓ|・|,)/g, `${separetor}$1`)
 
         const arr: string[] = str.split(separetor);
 
         const joined = [
             'ド', 'レ', 'ミ', 'ファ', 'ソ', 'ラ', 'シ', 'モ', '・',
-            'ﾄﾞ', 'ﾚ', 'ﾐ', 'ﾌｧ', 'ｿ', 'ﾗ', 'ｼ', ','].join('|');
+            'ﾄﾞ', 'ﾚ', 'ﾐ', 'ﾌｧ', 'ｿ', 'ﾗ', 'ｼ', 'ﾓ', ','].join('|');
         const regExpOnkai = new RegExp(`^(${joined})([↑↓])?`);
 
         // [{scale: 'ド', len: 3},
