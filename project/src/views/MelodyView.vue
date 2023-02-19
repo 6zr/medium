@@ -69,6 +69,66 @@ const allScaleList: {
         { scale: 'シ',   value: 'B4' },
         { scale: 'モ',   value: 'E5' }, // ミ相当
     ],
+    'ハンガリー': [
+        { scale: 'ド',   value: 'C4' },
+        { scale: 'レ',   value: 'D4' },
+        { scale: 'ミ',   value: 'D#4' },
+        { scale: 'ファ', value: 'F#4' },
+        { scale: 'ソ',   value: 'G4' },
+        { scale: 'ラ',   value: 'G#4' },
+        { scale: 'シ',   value: 'B4' },
+        { scale: 'モ',   value: 'D#5' }, // ミ相当
+    ],
+    'スペイン': [
+        { scale: 'ド',   value: 'C4'  },
+        { scale: 'レ',   value: 'C#4' },
+        { scale: 'ミ',   value: 'E4'  },
+        { scale: 'ファ', value: 'F4'  },
+        { scale: 'ソ',   value: 'G4'  },
+        { scale: 'ラ',   value: 'G#4' },
+        { scale: 'シ',   value: 'A#4' },
+        { scale: 'モ',   value: 'E5'  }, // ミ相当
+    ],
+    'ヨナ抜き短調': [
+        { scale: 'ド',   value: 'C4'  },
+        { scale: 'レ',   value: 'D4'  },
+        { scale: 'ミ',   value: 'D#4' },
+        { scale: 'ファ', value: 'G4'  },
+        { scale: 'ソ',   value: 'G4'  },
+        { scale: 'ラ',   value: 'G#4' },
+        { scale: 'シ',   value: 'G#4' },
+        { scale: 'モ',   value: 'D#5' }, // ミ相当
+    ],
+    '宮調式': [
+        { scale: 'ド',   value: 'C4'  },
+        { scale: 'レ',   value: 'D4'  },
+        { scale: 'ミ',   value: 'E4' },
+        { scale: 'ファ', value: 'G4'  },
+        { scale: 'ソ',   value: 'G4'  },
+        { scale: 'ラ',   value: 'A4' },
+        { scale: 'シ',   value: 'A4' },
+        { scale: 'モ',   value: 'E5' }, // ミ相当
+    ],
+    'メジャーブルース': [
+        { scale: 'ド',   value: 'C4'  },
+        { scale: 'レ',   value: 'D4'  },
+        { scale: 'ミ',   value: 'D#4' },
+        { scale: 'ファ', value: 'E4'  },
+        { scale: 'ソ',   value: 'G4'  },
+        { scale: 'ラ',   value: 'A4'  },
+        { scale: 'シ',   value: 'A4'  },
+        { scale: 'モ',   value: 'D#5' }, // ミ相当
+    ],
+    'マイナーブルース': [
+        { scale: 'ド',   value: 'C4'  },
+        { scale: 'レ',   value: 'D#4'  },
+        { scale: 'ミ',   value: 'F4' },
+        { scale: 'ファ', value: 'F#4'  },
+        { scale: 'ソ',   value: 'G4'  },
+        { scale: 'ラ',   value: 'A#4' },
+        { scale: 'シ',   value: 'A#4' },
+        { scale: 'モ',   value: 'F5' }, // ミ相当
+    ],
 };
 
 const lenList = [
