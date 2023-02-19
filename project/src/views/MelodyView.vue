@@ -19,199 +19,86 @@
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator';
+import { Scale } from '../components/Melody/Scale'
 import * as Tone from 'tone'; // @ is an alias to /src
 
-type Scale = {
-    scale: string;
-    value: string;
-};
-
 const allScaleList: {
-    [key: string]: Scale[],
+    [key: string]: {
+        key: string;
+        scale: Scale;
+    }[],
 } = {
     '通常': [
-        { scale:  'ド↓', value: 'C3' },
-        { scale:  'レ↓', value: 'D3' },
-        { scale:  'ミ↓', value: 'E3' },
-        { scale:'ファ↓', value: 'F3' },
-        { scale:  'ソ↓', value: 'G3' },
-        { scale:  'ラ↓', value: 'A3' },
-        { scale:  'シ↓', value: 'B3' },
-        { scale:  'ド',   value: 'C4' },
-        { scale:  'レ',   value: 'D4' },
-        { scale:  'ミ',   value: 'E4' },
-        { scale:'ファ',   value: 'F4' },
-        { scale:  'ソ',   value: 'G4' },
-        { scale:  'ラ',   value: 'A4' },
-        { scale:  'シ',   value: 'B4' },
-        { scale:  'ド↑', value: 'C5' },
-        { scale:  'レ↑', value: 'D5' },
-        { scale:  'ミ↑', value: 'E5' },
-        { scale:'ファ↑', value: 'F5' },
-        { scale:  'ソ↑', value: 'G5' },
-        { scale:  'ラ↑', value: 'A5' },
-        { scale:  'シ↑', value: 'B5' },
+        { key:  'ド',   scale: new Scale('C', 4) },
+        { key:  'レ',   scale: new Scale('D', 4) },
+        { key:  'ミ',   scale: new Scale('E', 4) },
+        { key:'ファ',   scale: new Scale('F', 4) },
+        { key:  'ソ',   scale: new Scale('G', 4) },
+        { key:  'ラ',   scale: new Scale('A', 4) },
+        { key:  'シ',   scale: new Scale('B', 4) },
     ],
     '琉球': [
-        { scale:  'ド↓', value: 'C3' },
-        { scale:  'レ↓', value: 'E3' },
-        { scale:  'ミ↓', value: 'E3' },
-        { scale:'ファ↓', value: 'F3' },
-        { scale:  'ソ↓', value: 'G3' },
-        { scale:  'ラ↓', value: 'B3' },
-        { scale:  'シ↓', value: 'B3' },
-        { scale:  'ド',   value: 'C4' },
-        { scale:  'レ',   value: 'E4' },
-        { scale:  'ミ',   value: 'E4' },
-        { scale:'ファ',   value: 'F4' },
-        { scale:  'ソ',   value: 'G4' },
-        { scale:  'ラ',   value: 'B4' },
-        { scale:  'シ',   value: 'B4' },
-        { scale:  'ド↑', value: 'C5' },
-        { scale:  'レ↑', value: 'E5' },
-        { scale:  'ミ↑', value: 'E5' },
-        { scale:'ファ↑', value: 'F5' },
-        { scale:  'ソ↑', value: 'G5' },
-        { scale:  'ラ↑', value: 'B5' },
-        { scale:  'シ↑', value: 'B5' },
+        { key:  'ド',   scale: new Scale('C', 4) },
+        { key:  'レ',   scale: new Scale('E', 4) },
+        { key:  'ミ',   scale: new Scale('E', 4) },
+        { key:'ファ',   scale: new Scale('F', 4) },
+        { key:  'ソ',   scale: new Scale('G', 4) },
+        { key:  'ラ',   scale: new Scale('B', 4) },
+        { key:  'シ',   scale: new Scale('B', 4) },
     ],
     'ジプシー': [
-        { scale:  'ド↓', value:  'C3' },
-        { scale:  'レ↓', value: 'C#3' },
-        { scale:  'ミ↓', value:  'E3' },
-        { scale:'ファ↓', value:  'F3' },
-        { scale:  'ソ↓', value:  'G3' },
-        { scale:  'ラ↓', value: 'G#3' },
-        { scale:  'シ↓', value:  'B3' },
-        { scale:  'ド',   value:  'C4' },
-        { scale:  'レ',   value: 'C#4' },
-        { scale:  'ミ',   value:  'E4' },
-        { scale:'ファ',   value:  'F4' },
-        { scale:  'ソ',   value:  'G4' },
-        { scale:  'ラ',   value: 'G#4' },
-        { scale:  'シ',   value:  'B4' },
-        { scale:  'ド↑', value:  'C5' },
-        { scale:  'レ↑', value: 'C#5' },
-        { scale:  'ミ↑', value:  'E5' },
-        { scale:'ファ↑', value:  'F5' },
-        { scale:  'ソ↑', value:  'G5' },
-        { scale:  'ラ↑', value: 'G#5' },
-        { scale:  'シ↑', value:  'B5' },
+        { key:  'ド',   scale: new Scale( 'C', 4) },
+        { key:  'レ',   scale: new Scale('C#', 4) },
+        { key:  'ミ',   scale: new Scale( 'E', 4) },
+        { key:'ファ',   scale: new Scale( 'F', 4) },
+        { key:  'ソ',   scale: new Scale( 'G', 4) },
+        { key:  'ラ',   scale: new Scale('G#', 4) },
+        { key:  'シ',   scale: new Scale( 'B', 4) },
     ],
     'アラビア': [
-        { scale:  'ド↓', value:  'C3' },
-        { scale:  'レ↓', value:  'D3' },
-        { scale:  'ミ↓', value: 'D#3' },
-        { scale:'ファ↓', value: 'F#3' },
-        { scale:  'ソ↓', value: 'G#3' },
-        { scale:  'ラ↓', value:  'B3' },
-        { scale:  'シ↓', value:  'B3' },
-        { scale:  'ド',   value:  'C4' },
-        { scale:  'レ',   value:  'D4' },
-        { scale:  'ミ',   value: 'D#4' },
-        { scale:'ファ',   value: 'F#4' },
-        { scale:  'ソ',   value: 'G#4' },
-        { scale:  'ラ',   value:  'B4' },
-        { scale:  'シ',   value:  'B4' },
-        { scale:  'ド↑', value:  'C5' },
-        { scale:  'レ↑', value:  'D5' },
-        { scale:  'ミ↑', value: 'D#5' },
-        { scale:'ファ↑', value: 'F#5' },
-        { scale:  'ソ↑', value: 'G#5' },
-        { scale:  'ラ↑', value:  'B5' },
-        { scale:  'シ↑', value:  'B5' },
+        { key:  'ド',   scale: new Scale( 'C', 4) },
+        { key:  'レ',   scale: new Scale( 'D', 4) },
+        { key:  'ミ',   scale: new Scale('D#', 4) },
+        { key:'ファ',   scale: new Scale('F#', 4) },
+        { key:  'ソ',   scale: new Scale('G#', 4) },
+        { key:  'ラ',   scale: new Scale( 'B', 4) },
+        { key:  'シ',   scale: new Scale( 'B', 4) },
     ],
     'ヨナ抜き短調': [
-        { scale:  'ド↓', value:  'C3' },
-        { scale:  'レ↓', value:  'D3' },
-        { scale:  'ミ↓', value: 'D#3' },
-        { scale:'ファ↓', value:  'G3' },
-        { scale:  'ソ↓', value:  'G3' },
-        { scale:  'ラ↓', value: 'G#3' },
-        { scale:  'シ↓', value: 'G#3' },
-        { scale:  'ド',   value:  'C4' },
-        { scale:  'レ',   value:  'D4' },
-        { scale:  'ミ',   value: 'D#4' },
-        { scale:'ファ',   value:  'G4' },
-        { scale:  'ソ',   value:  'G4' },
-        { scale:  'ラ',   value: 'G#4' },
-        { scale:  'シ',   value: 'G#4' },
-        { scale:  'ド↑', value:  'C5' },
-        { scale:  'レ↑', value:  'D5' },
-        { scale:  'ミ↑', value: 'D#5' },
-        { scale:'ファ↑', value:  'G5' },
-        { scale:  'ソ↑', value:  'G5' },
-        { scale:  'ラ↑', value: 'G#5' },
-        { scale:  'シ↑', value: 'G#5' },
+        { key:  'ド',   scale: new Scale( 'C', 4) },
+        { key:  'レ',   scale: new Scale( 'D', 4) },
+        { key:  'ミ',   scale: new Scale('D#', 4) },
+        { key:'ファ',   scale: new Scale( 'G', 4) },
+        { key:  'ソ',   scale: new Scale( 'G', 4) },
+        { key:  'ラ',   scale: new Scale('G#', 4) },
+        { key:  'シ',   scale: new Scale('G#', 4) },
     ],
     '宮調式': [
-        { scale:  'ド↓', value: 'C3' },
-        { scale:  'レ↓', value: 'D3' },
-        { scale:  'ミ↓', value: 'E3' },
-        { scale:'ファ↓', value: 'G3' },
-        { scale:  'ソ↓', value: 'G3' },
-        { scale:  'ラ↓', value: 'A3' },
-        { scale:  'シ↓', value: 'A3' },
-        { scale:  'ド',   value: 'C4' },
-        { scale:  'レ',   value: 'D4' },
-        { scale:  'ミ',   value: 'E4' },
-        { scale:'ファ',   value: 'G4' },
-        { scale:  'ソ',   value: 'G4' },
-        { scale:  'ラ',   value: 'A4' },
-        { scale:  'シ',   value: 'A4' },
-        { scale:  'ド↑', value: 'C5' },
-        { scale:  'レ↑', value: 'D5' },
-        { scale:  'ミ↑', value: 'E5' },
-        { scale:'ファ↑', value: 'G5' },
-        { scale:  'ソ↑', value: 'G5' },
-        { scale:  'ラ↑', value: 'A5' },
-        { scale:  'シ↑', value: 'A5' },
+        { key:  'ド',   scale: new Scale('C', 4) },
+        { key:  'レ',   scale: new Scale('D', 4) },
+        { key:  'ミ',   scale: new Scale('E', 4) },
+        { key:'ファ',   scale: new Scale('G', 4) },
+        { key:  'ソ',   scale: new Scale('G', 4) },
+        { key:  'ラ',   scale: new Scale('A', 4) },
+        { key:  'シ',   scale: new Scale('A', 4) },
     ],
     'メジャーブルース': [
-        { scale:  'ド↓', value:  'C3' },
-        { scale:  'レ↓', value:  'D3' },
-        { scale:  'ミ↓', value: 'D#3' },
-        { scale:'ファ↓', value:  'E3' },
-        { scale:  'ソ↓', value:  'G3' },
-        { scale:  'ラ↓', value:  'A3' },
-        { scale:  'シ↓', value:  'A3' },
-        { scale:  'ド',   value:  'C4' },
-        { scale:  'レ',   value:  'D4' },
-        { scale:  'ミ',   value: 'D#4' },
-        { scale:'ファ',   value:  'E4' },
-        { scale:  'ソ',   value:  'G4' },
-        { scale:  'ラ',   value:  'A4' },
-        { scale:  'シ',   value:  'A4' },
-        { scale:  'ド↑', value:  'C5' },
-        { scale:  'レ↑', value:  'D5' },
-        { scale:  'ミ↑', value: 'D#5' },
-        { scale:'ファ↑', value:  'E5' },
-        { scale:  'ソ↑', value:  'G5' },
-        { scale:  'ラ↑', value:  'A5' },
-        { scale:  'シ↑', value:  'A5' },
+        { key:  'ド',   scale: new Scale( 'C', 4) },
+        { key:  'レ',   scale: new Scale( 'D', 4) },
+        { key:  'ミ',   scale: new Scale('D#', 4) },
+        { key:'ファ',   scale: new Scale( 'E', 4) },
+        { key:  'ソ',   scale: new Scale( 'G', 4) },
+        { key:  'ラ',   scale: new Scale( 'A', 4) },
+        { key:  'シ',   scale: new Scale( 'A', 4) },
     ],
     'マイナーブルース': [
-        { scale:  'ド↓', value:  'C3' },
-        { scale:  'レ↓', value: 'D#3' },
-        { scale:  'ミ↓', value:  'F3' },
-        { scale:'ファ↓', value: 'F#3' },
-        { scale:  'ソ↓', value:  'G3' },
-        { scale:  'ラ↓', value: 'A#3' },
-        { scale:  'シ↓', value: 'A#3' },
-        { scale:  'ド',   value:  'C4' },
-        { scale:  'レ',   value: 'D#4' },
-        { scale:  'ミ',   value:  'F4' },
-        { scale:'ファ',   value: 'F#4' },
-        { scale:  'ソ',   value:  'G4' },
-        { scale:  'ラ',   value: 'A#4' },
-        { scale:  'シ',   value: 'A#4' },
-        { scale:  'ド↑', value:  'C5' },
-        { scale:  'レ↑', value: 'D#5' },
-        { scale:  'ミ↑', value:  'F5' },
-        { scale:'ファ↑', value: 'F#5' },
-        { scale:  'ソ↑', value:  'G5' },
-        { scale:  'ラ↑', value: 'A#5' },
-        { scale:  'シ↑', value: 'A#5' },
+        { key:  'ド',   scale: new Scale( 'C', 4) },
+        { key:  'レ',   scale: new Scale('D#', 4) },
+        { key:  'ミ',   scale: new Scale( 'F', 4) },
+        { key:'ファ',   scale: new Scale('F#', 4) },
+        { key:  'ソ',   scale: new Scale( 'G', 4) },
+        { key:  'ラ',   scale: new Scale('A#', 4) },
+        { key:  'シ',   scale: new Scale('A#', 4) },
     ],
 };
 
@@ -237,6 +124,12 @@ const hankaku: {
     ',': '・',
 };
 
+const octaveArrowsCount = function(octaveArrows: string): number {
+    const up =( octaveArrows.match(/↑/g) || []).length;
+    const down = (octaveArrows.match(/↓/g) || []).length;
+    return up - down;
+};
+
 @Component
 export default class extends Vue {
     get scale() {
@@ -258,20 +151,26 @@ export default class extends Vue {
 
         console.log(this.scoreInner);
 
-        const values = this.scaleList.map(x => x.value);
+        const values = this.scaleList.map(x => x.scale);
         const mo = values[Math.floor(Math.random() * values.length)];
 
         const melodyList = this.scoreInner.map((x) => {
-            const isMo = x.scale.startsWith('モ');
-            const scale = isMo? mo : (this.scaleList.find(y => x.scale === y.scale))?.value;
+            const isMo = x.character === 'モ';
             const len = (lenList.find(y => x.len === y.len))?.value || '16n';
+            console.log(x);
+            const scaleBase = isMo? mo : (this.scaleList.find(y => x.character === y.key))?.scale;
+
+
+            const scale = scaleBase == null ? null
+                : scaleBase!.shift(octaveArrowsCount(x.octaveArrows), x.sharp);
+
             return { scale, len };
         });
 
         let time = Tone.now();
         melodyList.forEach((item) => {
             if (item.scale != null) {
-                synth.triggerAttackRelease(item.scale, item.len, time);
+                synth.triggerAttackRelease(item.scale.scaleText, item.len, time);
             }
             time = time + Tone.Time(item.len).toSeconds();
         });
@@ -285,7 +184,9 @@ export default class extends Vue {
     }
 
     get scoreInner(): {
-        scale: string,
+        character: string,
+        sharp: boolean,
+        octaveArrows: string,
         len: number,
     }[] {
         const separetor = '/';
@@ -296,7 +197,7 @@ export default class extends Vue {
         const joined = [
             'ド', 'レ', 'ミ', 'ファ', 'ソ', 'ラ', 'シ', 'モ', '・',
             'ﾄﾞ', 'ﾚ', 'ﾐ', 'ﾌｧ', 'ｿ', 'ﾗ', 'ｼ', 'ﾓ', ','].join('|');
-        const regExpOnkai = new RegExp(`^(${joined})([↑↓])?`);
+        const regExp = new RegExp(`^(${joined})(\\*)?([↑↓]+)?`);
 
         // [{scale: 'ド', len: 3},
         //  {scale: 'レ', len: 2},
@@ -305,12 +206,13 @@ export default class extends Vue {
         return arr
             .filter(x => x != null && x !== '')
             .map(x => {
-                const hit = x.match(regExpOnkai);
+                const hit = x.match(regExp);
                 const isHankaku = Object.keys(hankaku).includes(hit![1]);
                 const character = isHankaku ? hankaku[hit![1]] : hit![1];
-                const scale = `${character}${hit![2] || ''}`;
+                const sharp = hit![2] === '*';
+                const octaveArrows = hit![3] || '';
                 const len = isHankaku ? 0.5 : (x.match(/ー/g) || []).length +1;
-                return { scale, len };
+                return { character, sharp, octaveArrows, len };
             })
         ;
     }
