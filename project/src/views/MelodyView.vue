@@ -7,7 +7,7 @@
 
         <v-card-actions>
             <v-spacer></v-spacer>
-            <v-btn color="primary" @click="tone">
+            <v-btn small block color="primary" @click="tone">
                 <v-icon small>mdi-music</v-icon>
                 <span class="font-weight-bold ml-1">演奏</span>
             </v-btn>
