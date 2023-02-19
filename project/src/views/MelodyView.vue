@@ -232,12 +232,25 @@ const allScaleList: {
 };
 
 const lenList = [
+    { len: 0.5, value: '16n' },
     { len: 1, value: '8n' },
     { len: 2, value: '4n' },
     { len: 3, value: '4n.' },
     { len: 4, value: '2n' },
     { len: 5, value: '1n' },
 ];
+const hankaku: {
+    [key: string]: string,
+} = {
+    'ﾄﾞ': 'ド',
+    'ﾚ': 'レ',
+    'ﾐ': 'ミ',
+    'ﾌｧ': 'ファ',
+    'ｿ': 'ソ',
+    'ﾗ': 'ラ',
+    'ｼ': 'シ',
+    ',': '・',
+};
 
 @Component
 export default class extends Vue {
@@ -258,12 +271,12 @@ export default class extends Vue {
     tone() {
         const synth = new Tone.Synth().toDestination();
 
+        console.log(this.scoreInner);
+
         const melodyList = this.scoreInner.map((x) => ({
             scale: (this.scaleList.find(y => x.scale === y.scale))?.value,
             len: (lenList.find(y => x.len === y.len))?.value || '16n',
         }));
-
-        // console.log(melodyList);
 
         let time = Tone.now();
         melodyList.forEach((item) => {
@@ -286,11 +299,14 @@ export default class extends Vue {
         len: number,
     }[] {
         const separetor = '/';
-        const str = this.score.replaceAll(/(ド|レ|ミ|ファ|ソ|ラ|シ|モ|・)/g, `${separetor}$1`)
+        const str = this.score.replaceAll(/(ド|レ|ミ|ファ|ソ|ラ|シ|モ|ﾄﾞ|ﾚ|ﾐ|ﾌｧ|ｿ|ﾗ|ｼ|・|,)/g, `${separetor}$1`)
 
         const arr: string[] = str.split(separetor);
 
-        console.log(arr);
+        const joined = [
+            'ド', 'レ', 'ミ', 'ファ', 'ソ', 'ラ', 'シ', 'モ', '・',
+            'ﾄﾞ', 'ﾚ', 'ﾐ', 'ﾌｧ', 'ｿ', 'ﾗ', 'ｼ', ','].join('|');
+        const regExpOnkai = new RegExp(`^(${joined})([↑↓])?`);
 
         // [{scale: 'ド', len: 3},
         //  {scale: 'レ', len: 2},
@@ -298,10 +314,14 @@ export default class extends Vue {
         //  {scale: 'ミ', len: 2}], みたいな
         return arr
             .filter(x => x != null && x !== '')
-            .map(x => ({
-              scale: x.match(/(^ド[↑↓]?|^レ[↑↓]?|^ミ[↑↓]?|^ファ[↑↓]?|^ソ[↑↓]?|^ラ[↑↓]?|^シ[↑↓]?|^モ?|^・)/)![0],
-              len: (x.match(/ー/g) || []).length + 1,
-            }))
+            .map(x => {
+                const hit = x.match(regExpOnkai);
+                const isHankaku = Object.keys(hankaku).includes(hit![1]);
+                const character = isHankaku ? hankaku[hit![1]] : hit![1];
+                const scale = `${character}${hit![2] || ''}`;
+                const len = isHankaku ? 0.5 : (x.match(/ー/g) || []).length +1;
+                return { scale, len };
+            })
         ;
     }
 }
