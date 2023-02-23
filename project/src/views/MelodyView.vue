@@ -4,14 +4,28 @@
     <v-card class="mt-4">
         <v-card-subtitle class="pb-1">音階 [{{scale}}]</v-card-subtitle>
         <v-card-text>{{score}}</v-card-text>
-
-        <v-card-actions>
-            <v-spacer></v-spacer>
-            <v-btn small block color="primary" @click="tone">
-                <v-icon small>mdi-music</v-icon>
-                <span class="font-weight-bold ml-1">演奏</span>
-            </v-btn>
-        </v-card-actions>
+        <v-card-text>
+            <v-row class="pb-2">
+                <v-col cols="12" sm="4" class="py-1">
+                    <v-btn small block outlined @click="stop">
+                        <v-icon small>mdi-stop</v-icon>
+                        <span class="font-weight-bold ml-1">停止</span>
+                    </v-btn>
+                </v-col>
+                <v-col cols="12" sm="4" class="py-1">
+                    <v-btn small block color="secondary" @click="playSolo">
+                        <v-icon small>mdi-music-note</v-icon>
+                        <span class="font-weight-bold ml-1">ソロ</span>
+                    </v-btn>
+                </v-col>
+                <v-col cols="12" sm="4" class="py-1">
+                    <v-btn small block color="primary" @click="play">
+                        <v-icon small>mdi-music</v-icon>
+                        <span class="font-weight-bold ml-1">演奏</span>
+                    </v-btn>
+                </v-col>
+            </v-row>
+        </v-card-text>
     </v-card>
 
   </v-container>
@@ -132,6 +146,8 @@ const octaveArrowsCount = function(octaveArrows: string): number {
 
 @Component
 export default class extends Vue {
+    songLength = 0;
+
     get scale() {
         if (typeof this.$route.query.scale !== 'string') {
             return '通常';
@@ -146,34 +162,102 @@ export default class extends Vue {
         return allScaleList[this.scale];
     }
 
-    tone() {
+    mounted() {
+        Tone.Transport.bpm.value = 240;
+        this.updateSongLength();
+        this.setDrums();
+    }
+
+    updateSongLength() {
+        this.songLength = this.scoreInner.reduce((a, b) => {
+            return a + b.len;
+        }, 0);
+    }
+
+    play() {
+        this.stop();
+        this.updateSongLength();
+        this.setMelody();
+        this.setDrums();
+        Tone.Transport.start();
+    }
+
+    playSolo() {
+        this.stop();
+        this.updateSongLength();
+        this.setMelody();
+        Tone.Transport.start();
+    }
+
+    stop() {
+        Tone.Transport.stop();
+        Tone.Transport.cancel();
+    }
+
+    setDrums() {
+        const songLength = Math.ceil(this.songLength/4) + 4; // ドラムを終わる小節
+
+        const membrane = new Tone.MembraneSynth().toDestination();
+        const partA = new Tone.Part(function(time, note){
+            membrane.triggerAttackRelease(note.note, "16n", time, 0.4);
+        }, [
+            { time: '0:0.0', note: 'C3' },
+            { time: '0:1.0', note: 'C3' },
+        ]);
+        partA.loop = true;
+        partA.start();
+        partA.stop(songLength);
+
+        const metal = new Tone.MetalSynth().toDestination();
+        const partB = new Tone.Part(function(time, note){
+            metal.triggerAttackRelease(note.note, "16n", time, 0.05);
+        }, [
+            { time: '0:2.0', note: 'C4' },
+            { time: '0:3.0', note: 'C4' },
+        ]);
+        partB.loop = true;
+        partB.start();
+        partB.stop(songLength);
+    }
+
+    setMelody() {
         const synth = new Tone.Synth().toDestination();
-
-        console.log(this.scoreInner);
-
         const values = this.scaleList.map(x => x.scale);
         const mo = values[Math.floor(Math.random() * values.length)];
 
         const melodyList = this.scoreInner.map((x) => {
             const isMo = x.character === 'モ';
-            const len = (lenList.find(y => x.len === y.len))?.value || '16n';
-            console.log(x);
             const scaleBase = isMo? mo : (this.scaleList.find(y => x.character === y.key))?.scale;
-
-
             const scale = scaleBase == null ? null
                 : scaleBase!.shift(octaveArrowsCount(x.octaveArrows), x.sharp);
-
-            return { scale, len };
+            return { scale, len: x.len };
         });
 
-        let time = Tone.now();
+        let time = 0;
+        const melodyLine: {
+            note: string;
+            duration: string;
+            time: string;
+        }[] = [];
+
         melodyList.forEach((item) => {
             if (item.scale != null) {
-                synth.triggerAttackRelease(item.scale.scaleText, item.len, time);
+                const duration = (lenList.find(x => item.len === x.len))?.value || '16n';
+                melodyLine.push({
+                    note: item.scale.scaleText,
+                    duration,
+                    time: `2:${time}`,
+                });
             }
-            time = time + Tone.Time(item.len).toSeconds();
+            time = time + item.len;
         });
+
+        //メロディをセット  
+        const melody = new Tone.Part((time, note) => {
+            synth.triggerAttackRelease(note.note, note.duration, time);
+        }, melodyLine); 
+        // melody.loop = true;
+        melody.start();
     }
 
     get score() {
