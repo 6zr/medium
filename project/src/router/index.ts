@@ -3,6 +3,7 @@ import Vue from 'vue';
 import VueRouter, { RouteConfig } from 'vue-router';
 import HomeView from '../views/HomeView.vue';
 import MelodyView from '../views/MelodyView.vue';
+import GotchaView from '../views/GotchaView.vue';
 
 Vue.use(VueRouter)
 
@@ -14,6 +15,10 @@ const routes: Array<RouteConfig> = [
   {
     path: '/melody',
     component: MelodyView,
+  },
+  {
+    path: '/gotcha',
+    component: GotchaView,
   },
 ]
 
