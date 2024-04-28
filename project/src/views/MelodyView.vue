@@ -4,6 +4,7 @@
     <v-card class="mt-4">
         <v-card-subtitle class="pb-1">音階 [{{scale}}]</v-card-subtitle>
         <v-card-text>{{score}}</v-card-text>
+        <v-card-text>{{chord}}</v-card-text>
         <v-card-text>
             <v-row class="pb-2">
                 <v-col cols="12" sm="4" class="py-1">
@@ -23,6 +24,21 @@
                         <v-icon small>mdi-music</v-icon>
                         <span class="font-weight-bold ml-1">演奏</span>
                     </v-btn>
+                </v-col>
+            </v-row>
+        </v-card-text>
+
+        <v-card-subtitle class="pb-1">演奏設定</v-card-subtitle>
+        <v-card-text>
+            <v-row class="pb-2">
+                <v-col cols="12" sm="4" class="py-1">
+                    <v-checkbox hide-details dense v-model="playMelody" label="メロディ" />
+                </v-col>
+                <v-col cols="12" sm="4" class="py-1">
+                    <v-checkbox hide-details dense v-model="playDrum" label="ドラム" />
+                </v-col>
+                <v-col cols="12" sm="4" class="py-1">
+                    <v-checkbox hide-details dense :disabled="!hasChord" v-model="playChord" label="コード" />
                 </v-col>
             </v-row>
         </v-card-text>
@@ -116,6 +132,21 @@ const allScaleList: {
     ],
 };
 
+interface Chord {
+    name: string;
+    notes: string[];
+};
+
+const ChordList: Chord[] = [
+    { name: 'C', notes: ['C4', 'E4', 'G4'] },
+    { name: 'Dm', notes: ['D4', 'F4', 'A5'] },
+    { name: 'Em', notes: ['E4', 'G4', 'B5'] },
+    { name: 'F', notes: ['F4', 'A5', 'C5'] },
+    { name: 'G', notes: ['G4', 'B5', 'D5'] },
+    { name: 'Am', notes: ['A5', 'C5', 'E5'] },
+    { name: 'Bm(-5)', notes: ['B5', 'D5', 'F5'] },
+];
+
 const lenList = [
     { len: 0.5, value: '16n' },
     { len: 1, value: '8n' },
@@ -148,6 +179,12 @@ const octaveArrowsCount = function(octaveArrows: string): number {
 export default class extends Vue {
     songLength = 0;
 
+    playMelody = true;
+
+    playDrum = true;
+
+    playChord = true;
+
     get scale() {
         if (typeof this.$route.query.scale !== 'string') {
             return '通常';
@@ -177,8 +214,16 @@ export default class extends Vue {
     play() {
         this.stop();
         this.updateSongLength();
-        this.setMelody();
-        this.setDrums();
+
+        if (this.playMelody) {
+            this.setMelody();
+        }
+        if (this.playDrum) {
+            this.setDrums();
+        }
+        if (this.playChord) {
+            this.setChord();
+        }
         Tone.Transport.start();
     }
 
@@ -260,6 +305,26 @@ export default class extends Vue {
         melody.start();
     }
 
+    setChord() {
+        if (!this.hasChord) {
+            return;
+        }
+        const songLength = Math.ceil(this.songLength) / 4 + 4; // 伴奏を終わる小節
+        const synth = new Tone.PolySynth().toDestination();
+        synth.volume.value = -8;
+        const list = [];
+        for (let i = 0; i <= songLength; i++ ) {
+            list.push({ time: `0:${i*4}.0`,  notes: this.chordInner![i%4].notes });
+            list.push({ time: `0:${i*4+2}.0`,  notes: this.chordInner![i%4].notes });
+        }
+
+        console.log(list);
+
+        const part = new Tone.Part(function(time, note){
+            synth.triggerAttackRelease(note.notes, "16n", time);
+        }, list).start();
+    }
+
     get score() {
         if (typeof this.$route.query.q === 'string') {
             return decodeURI(this.$route.query.q);
@@ -299,6 +364,31 @@ export default class extends Vue {
                 return { character, sharp, octaveArrows, len };
             })
         ;
+    }
+
+    get chord() {
+        if (typeof this.$route.query.c === 'string') {
+            return decodeURI(this.$route.query.c);
+        }
+        return '';
+    }
+
+    get chordInner(): Chord[] | null {
+        const regExp = new RegExp((ChordList.map(chord => chord.name)).join('|'), 'g');
+        const chordNames = this.chord.match(regExp) || [];
+
+        const chords = chordNames.map(name => {
+            return ChordList.find(item => name === item.name);
+        }).filter(x => x != null) || [];
+
+        if (chords.length !== 4) {
+            return null;
+        }
+        return chords as Chord[];
+    }
+
+    get hasChord() {
+        return this.chordInner != null;
     }
 }
 </script>
