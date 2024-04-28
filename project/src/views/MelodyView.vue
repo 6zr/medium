@@ -138,13 +138,21 @@ interface Chord {
 };
 
 const ChordList: Chord[] = [
+    // { name: 'C', notes: ['C4', 'E4', 'G4'] },
+    // { name: 'Dm', notes: ['D4', 'F4', 'A5'] },
+    // { name: 'Em', notes: ['E4', 'G4', 'B5'] },
+    // { name: 'F', notes: ['F4', 'A5', 'C5'] },
+    // { name: 'G', notes: ['G4', 'B5', 'D5'] },
+    // { name: 'Am', notes: ['A5', 'C5', 'E5'] },
+    // { name: 'Bm(-5)', notes: ['B5', 'D5', 'F5'] },
+
     { name: 'C', notes: ['C4', 'E4', 'G4'] },
     { name: 'Dm', notes: ['D4', 'F4', 'A5'] },
     { name: 'Em', notes: ['E4', 'G4', 'B5'] },
-    { name: 'F', notes: ['F4', 'A5', 'C5'] },
-    { name: 'G', notes: ['G4', 'B5', 'D5'] },
-    { name: 'Am', notes: ['A5', 'C5', 'E5'] },
-    { name: 'Bm(-5)', notes: ['B5', 'D5', 'F5'] },
+    { name: 'F', notes: ['C4', 'F4', 'A5'] },
+    { name: 'G', notes: ['D4', 'D4', 'B5'] },
+    { name: 'Am', notes: ['C4', 'E4', 'A5'] },
+    { name: 'Bm(-5)', notes: ['D4', 'F4', 'B5'] },
 ];
 
 const lenList = [
@@ -243,6 +251,7 @@ export default class extends Vue {
         const songLength = Math.ceil(this.songLength/4) + 4; // ドラムを終わる小節
 
         const membrane = new Tone.MembraneSynth().toDestination();
+        membrane.volume.value = -8;
         const partA = new Tone.Part(function(time, note){
             membrane.triggerAttackRelease(note.note, "16n", time, 0.4);
         }, [
@@ -254,6 +263,7 @@ export default class extends Vue {
         partA.stop(songLength);
 
         const metal = new Tone.MetalSynth().toDestination();
+        metal.volume.value = -8;
         const partB = new Tone.Part(function(time, note){
             metal.triggerAttackRelease(note.note, "16n", time, 0.05);
         }, [
@@ -311,17 +321,17 @@ export default class extends Vue {
         }
         const songLength = Math.ceil(this.songLength) / 4 + 4; // 伴奏を終わる小節
         const synth = new Tone.PolySynth().toDestination();
-        synth.volume.value = -8;
+        synth.volume.value = -14;
         const list = [];
         for (let i = 0; i <= songLength; i++ ) {
             list.push({ time: `0:${i*4}.0`,  notes: this.chordInner![i%4].notes });
-            list.push({ time: `0:${i*4+2}.0`,  notes: this.chordInner![i%4].notes });
+            // list.push({ time: `0:${i*4+2}.0`,  notes: this.chordInner![i%4].notes });
         }
 
         console.log(list);
 
         const part = new Tone.Part(function(time, note){
-            synth.triggerAttackRelease(note.notes, "16n", time);
+            synth.triggerAttackRelease(note.notes, "4n", time);
         }, list).start();
     }
 
