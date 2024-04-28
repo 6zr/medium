@@ -1,16 +1,29 @@
 <template>
+<div :class="ready">
+  <div class="intro">
+    <v-container class="fg">
+      <v-btn block color="primary" @click="boot">
+          <v-icon small>mdi-music-note</v-icon>
+          <span class="font-weight-bold ml-1">ハッスル・マッスル</span>
+          <v-icon small>mdi-music</v-icon>
+      </v-btn>
+    </v-container>
+  </div>
+
   <div class="gotcha" :class="rarity">
     <v-container class="fg">
       <v-row class="content rarity">{{ rarity }}</v-row>
       <v-row class="content gift">{{ gift }}</v-row>
     </v-container>
   </div>
+</div>
 </template>
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator';
 import * as THREE from 'three';
 import VantaFog from 'vanta/dist/vanta.fog.min';
+import * as Tone from 'tone'; // @ is an alias to /src
 import '@fontsource/condiment';
 
 const VANTA_CONFIG_BASE = {
@@ -51,6 +64,8 @@ const VANTA_CONFIG_RARITY: {
 export default class extends Vue {
     vantaEffect: any = null;
 
+    ready: string = 'not-ready';
+
     get gift() {
         if (typeof this.$route.query.gift !== 'string') {
             return '';
@@ -74,6 +89,9 @@ export default class extends Vue {
     }
 
     mounted() {
+    }
+
+    effect() {
         this.vantaEffect = VantaFog({
             ...VANTA_CONFIG_BASE,
             ...this.rarityConfig,
@@ -81,8 +99,13 @@ export default class extends Vue {
                 el: this.$el,
                 THREE: THREE,
             },
-        })
+        });
+    }
 
+    boot() {
+        this.ready = 'ready';
+        this.effect();
+        this.playSound();
     }
 
     beforeDestroy() {
@@ -90,12 +113,34 @@ export default class extends Vue {
             this.vantaEffect.destroy();
         }
     }
+
+    playSound() {
+        Tone.Transport.stop();
+        Tone.Transport.cancel();
+        Tone.Transport.bpm.value = 240;
+        const poly = new Tone.PolySynth().toDestination();
+        const partB = new Tone.Part(function(time){
+            poly.triggerAttackRelease(["C4", "E4", "G4", "A#5" ], "2n", time);
+        }, [
+            { time: '0:0.0' },
+        ]).start(3.4);
+        Tone.Transport.start();
+    }
 }
 </script>
 
 
 <style scoped>
-.gotcha {
+.not-ready .gotcha,
+.ready .intro {
+    display: none;
+}
+
+.gotcha.not-ready {
+    display: none;
+}
+
+.ready, .gotcha {
     height: 100%;
 }
 
@@ -120,14 +165,14 @@ export default class extends Vue {
     width: 100%;
 }
 
-.fg .content.gift {
+.ready .fg .content.gift {
     font-size: 96px;
     top: 64px;
     opacity: 0;
     animation: fromright 1.0s ease-in-out 2.0s forwards;
 }
 
-.fg .content.rarity {
+.ready .fg .content.rarity {
     font-family: "condiment";
     font-size: 64px;
     top: 0;
