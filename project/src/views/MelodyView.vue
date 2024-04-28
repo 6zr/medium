@@ -147,12 +147,12 @@ const ChordList: Chord[] = [
     // { name: 'Bm(-5)', notes: ['B5', 'D5', 'F5'] },
 
     { name: 'C', notes: ['C4', 'E4', 'G4'] },
-    { name: 'Dm', notes: ['D4', 'F4', 'A5'] },
-    { name: 'Em', notes: ['E4', 'G4', 'B5'] },
-    { name: 'F', notes: ['C4', 'F4', 'A5'] },
-    { name: 'G', notes: ['D4', 'D4', 'B5'] },
-    { name: 'Am', notes: ['C4', 'E4', 'A5'] },
-    { name: 'Bm(-5)', notes: ['D4', 'F4', 'B5'] },
+    { name: 'Dm', notes: ['D4', 'F4', 'A4'] },
+    { name: 'Em', notes: ['E4', 'G4', 'B4'] },
+    { name: 'F', notes: ['C4', 'F4', 'A4'] },
+    { name: 'G', notes: ['D4', 'D4', 'B4'] },
+    { name: 'Am', notes: ['C4', 'E4', 'A4'] },
+    { name: 'Bm(-5)', notes: ['D4', 'F4', 'B4'] },
 ];
 
 const lenList = [
@@ -384,7 +384,11 @@ export default class extends Vue {
     }
 
     get chordInner(): Chord[] | null {
-        const regExp = new RegExp((ChordList.map(chord => chord.name)).join('|'), 'g');
+        const joined = (ChordList.map(chord => chord.name)).join('|');
+        const bs = String.fromCharCode(92);
+        const escaped = joined.replaceAll('(',`${bs}(`).replaceAll(')',`${bs})`);
+
+        const regExp = new RegExp(escaped, 'g');
         const chordNames = this.chord.match(regExp) || [];
 
         const chords = chordNames.map(name => {
