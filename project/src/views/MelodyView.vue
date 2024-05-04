@@ -2,6 +2,10 @@
   <v-container class="melody">
 
     <v-card class="mt-4">
+        <v-card-title class="pb-8" v-if="hasLyric">
+            <span class="font-weight-bold">{{lyric}}♪</span>
+        </v-card-title>
+
         <v-card-subtitle class="pb-1">音階 [{{scale}}]</v-card-subtitle>
         <v-card-text>{{score}}</v-card-text>
         <v-card-text>{{chord}}</v-card-text>
@@ -205,6 +209,17 @@ export default class extends Vue {
 
     get scaleList() {
         return allScaleList[this.scale];
+    }
+
+    get lyric() {
+        if (typeof this.$route.query.lyric !== 'string') {
+            return null;
+        }
+        return this.$route.query.lyric;
+    }
+
+    get hasLyric() {
+        return this.lyric != null;
     }
 
     mounted() {
