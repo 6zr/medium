@@ -44,6 +44,9 @@
                 <v-col cols="12" sm="4" class="py-1">
                     <v-checkbox hide-details dense :disabled="!hasChord" v-model="playChord" label="コード" />
                 </v-col>
+                <v-col cols="12" sm="4" class="py-1">
+                    <v-checkbox hide-details dense :disabled="!hasLyric" v-model="playVocal" label="ボーカル" />
+                </v-col>
             </v-row>
         </v-card-text>
     </v-card>
@@ -187,6 +190,10 @@ const octaveArrowsCount = function(octaveArrows: string): number {
     return up - down;
 };
 
+const uttr = new SpeechSynthesisUtterance();
+uttr.rate = 0.1;
+uttr.pitch = 1.0;
+
 @Component
 export default class extends Vue {
     songLength = 0;
@@ -196,6 +203,8 @@ export default class extends Vue {
     playDrum = true;
 
     playChord = true;
+
+    playVocal = false;
 
     get scale() {
         if (typeof this.$route.query.scale !== 'string') {
@@ -248,6 +257,18 @@ export default class extends Vue {
             this.setChord();
         }
         Tone.Transport.start();
+
+        if (this.playVocal) {
+            const lyrics = (this.lyric || '').split('・');
+            let count = 0;
+            lyrics.forEach((lyric) => {
+                window.setTimeout(() => {
+                    uttr.text = lyric || '';
+                    window.speechSynthesis.speak(uttr)
+                }, 2000 + (count * 125))
+                count = count + lyrics.length + 1;
+            });
+        }
     }
 
     playSolo() {
