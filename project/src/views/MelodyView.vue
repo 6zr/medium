@@ -191,7 +191,7 @@ const octaveArrowsCount = function(octaveArrows: string): number {
 };
 
 const uttr = new SpeechSynthesisUtterance();
-uttr.rate = 0.1;
+uttr.rate = 0.2;
 uttr.pitch = 1.0;
 
 @Component
@@ -265,7 +265,7 @@ export default class extends Vue {
                 window.setTimeout(() => {
                     uttr.text = lyric || '';
                     window.speechSynthesis.speak(uttr)
-                }, 2000 + (count * 125))
+                }, 1800 + (count * 125))
                 count = count + lyrics.length + 1;
             });
         }
