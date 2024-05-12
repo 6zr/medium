@@ -107,7 +107,12 @@
 # # sh ./script.sh ぶぃ
 # # sh ./script.sh ぶぇ
 # # sh ./script.sh ぶぉ
-sh ./script.sh ヴァ
-sh ./script.sh ヴィ
-sh ./script.sh ヴェ
-sh ./script.sh ヴォ
+# sh ./script.sh ヴァ
+# sh ./script.sh ヴィ
+# sh ./script.sh ヴェ
+# sh ./script.sh ヴォ
+sh ./script.sh ら
+sh ./script.sh り
+sh ./script.sh る
+sh ./script.sh れ
+sh ./script.sh ろ
