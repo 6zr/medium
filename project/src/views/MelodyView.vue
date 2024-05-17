@@ -18,9 +18,9 @@
                     </v-btn>
                 </v-col>
                 <v-col cols="12" sm="4" class="py-1">
-                    <v-btn small block color="secondary" @click="playSolo">
+                    <v-btn small block color="secondary" @click="playLyric" :disabled="!hasLyric">
                         <v-icon small>mdi-music-note</v-icon>
-                        <span class="font-weight-bold ml-1">ソロ</span>
+                        <span class="font-weight-bold ml-1">歌詞</span>
                     </v-btn>
                 </v-col>
                 <v-col cols="12" sm="4" class="py-1">
@@ -184,6 +184,14 @@ const hankaku: {
     ',': '・',
 };
 
+const VOICE_CHAR_LIST: string[] = ("あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをがぎぐげござじずぜぞだぢづでどばびぶべぼぱぴぷぺぽぁぃぅぇぉゃゅょん".split(''));
+VOICE_CHAR_LIST.push(...[
+    "きゃ", "しゃ", "ちゃ", "にゃ", "ひゃ", "みゃ", "ぎゃ", "じゃ", "びゃ",
+    "ぴゃ", "きゅ", "しゅ", "ちゅ", "にゅ", "ひゅ", "みゅ", "ぎゅ", "じゅ",
+    "びゅ", "ぴゅ", "きょ", "しょ", "ちょ", "にょ", "ひょ", "みょ", "ぎょ",
+    "じょ", "びょ", "ぴょ", "ふぁ", "ふぃ", "ふぇ", "ふぉ",
+]);
+
 const octaveArrowsCount = function(octaveArrows: string): number {
     const up =( octaveArrows.match(/↑/g) || []).length;
     const down = (octaveArrows.match(/↓/g) || []).length;
@@ -205,6 +213,8 @@ export default class extends Vue {
     playChord = true;
 
     playVocal = false;
+
+    samplers: { char: string, sampler: Tone.Sampler }[] = [];
 
     get scale() {
         if (typeof this.$route.query.scale !== 'string') {
@@ -231,10 +241,26 @@ export default class extends Vue {
         return this.lyric != null;
     }
 
+    get lyricCharList() {
+        if (this.lyric == null) {
+            return [];
+        }
+        let chars = this.lyric;
+        chars = chars.replace(/[一-龠]/g, 'ふふ');
+        chars = chars.replace(/[\u30a1-\u30f6]/g, (x) => {
+            const chr = x.charCodeAt(0) - 0x60;
+            return String.fromCharCode(chr);
+        });
+        return (chars.match(/.[ぁぃぅぇぉゃゅょァィゥェォャュョ]?/g) || [])
+            .filter((char) => VOICE_CHAR_LIST.indexOf(char) >= 0);
+    }
+
     mounted() {
+        this.playVocal = this.hasLyric;
         Tone.Transport.bpm.value = 240;
         this.updateSongLength();
         this.setDrums();
+        this.setSamplers();
     }
 
     updateSongLength() {
@@ -256,26 +282,25 @@ export default class extends Vue {
         if (this.playChord) {
             this.setChord();
         }
-        Tone.Transport.start();
-
         if (this.playVocal) {
-            const lyrics = (this.lyric || '').split('・');
-            let count = 0;
-            lyrics.forEach((lyric) => {
-                window.setTimeout(() => {
-                    uttr.text = lyric || '';
-                    window.speechSynthesis.speak(uttr)
-                }, 1800 + (count * 125))
-                count = count + lyrics.length + 1;
-            });
+            this.setVocal();
         }
+        Tone.Transport.start();
     }
 
-    playSolo() {
-        this.stop();
-        this.updateSongLength();
-        this.setMelody();
-        Tone.Transport.start();
+    playLyric() {
+        uttr.text = this.lyric || '';
+        window.speechSynthesis.speak(uttr)
+
+        // const lyrics = (this.lyric || '').split('・');
+        // let count = 0;
+        // lyrics.forEach((lyric) => {
+        //     window.setTimeout(() => {
+        //         uttr.text = lyric || '';
+        //         window.speechSynthesis.speak(uttr)
+        //     }, 1800 + (count * 125))
+        //     count = count + lyrics.length + 1;
+        // });
     }
 
     stop() {
@@ -311,19 +336,75 @@ export default class extends Vue {
         partB.stop(songLength);
     }
 
-    setMelody() {
-        const synth = new Tone.Synth().toDestination();
+    setSamplers() {
+        const charList = Array.from(new Set(this.lyricCharList));
+        this.samplers = charList
+            .filter((char) => VOICE_CHAR_LIST.indexOf(char) >= 0)
+            .map((char) => {
+                const sampler = new Tone.Sampler({
+                    urls: {
+                        E3: `${char}52.wav`,
+                        A3: `${char}57.wav`,
+                        E4: `${char}64.wav`,
+                        A4: `${char}69.wav`,
+                        E5: `${char}76.wav`,
+                    },
+                    baseUrl: "https://6zr.github.io/medium/resources/audio/samples/vocal/",
+                }).toDestination();
+                sampler.volume.value = +8;
+                return { char, sampler };
+            });
+    }
+
+    setVocal() {
+        this.samplers.forEach((sampler) => {
+            const melodyLine: {
+                note: string;
+                duration: string;
+                time: string;
+            }[] = [];
+
+            let time = 0;
+            let index = 0;
+
+            this.melodyList.forEach((item) => {
+                if (item.scale != null && this.lyricCharList[index] === sampler.char) {
+                    const duration = (lenList.find(x => item.len === x.len))?.value || '16n';
+                    melodyLine.push({
+                        note: item.scale.scaleText,
+                        duration,
+                        time: `2:${time}`,
+                    });
+                }
+                if (item.scale != null && this.lyricCharList[index] != null) {
+                    index = index + 1;
+                }
+                time = time + item.len;
+            });
+
+            //メロディをセット
+            const part = new Tone.Part((time, note) => {
+                sampler.sampler.triggerAttackRelease(note.note, note.duration, time);
+            }, melodyLine);
+            part.start();
+        });
+    }
+
+    get melodyList() {
         const values = this.scaleList.map(x => x.scale);
         const mo = values[Math.floor(Math.random() * values.length)];
-
-        const melodyList = this.scoreInner.map((x) => {
+        return this.scoreInner.map((x) => {
             const isMo = x.character === 'モ';
             const scaleBase = isMo? mo : (this.scaleList.find(y => x.character === y.key))?.scale;
             const scale = scaleBase == null ? null
                 : scaleBase!.shift(octaveArrowsCount(x.octaveArrows), x.sharp);
             return { scale, len: x.len };
         });
+    }
 
+    setMelody() {
+        const synth = new Tone.Synth().toDestination();
+        synth.volume.value = -2;
         let time = 0;
         const melodyLine: {
             note: string;
@@ -331,7 +412,7 @@ export default class extends Vue {
             time: string;
         }[] = [];
 
-        melodyList.forEach((item) => {
+        this.melodyList.forEach((item) => {
             if (item.scale != null) {
                 const duration = (lenList.find(x => item.len === x.len))?.value || '16n';
                 melodyLine.push({
@@ -347,7 +428,6 @@ export default class extends Vue {
         const melody = new Tone.Part((time, note) => {
             synth.triggerAttackRelease(note.note, note.duration, time);
         }, melodyLine); 
-        // melody.loop = true;
         melody.start();
     }
 
@@ -364,7 +444,7 @@ export default class extends Vue {
             // list.push({ time: `0:${i*4+2}.0`,  notes: this.chordInner![i%4].notes });
         }
 
-        console.log(list);
+        // console.log(list);
 
         const part = new Tone.Part(function(time, note){
             synth.triggerAttackRelease(note.notes, "4n", time);
