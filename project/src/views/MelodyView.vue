@@ -351,7 +351,7 @@ export default class extends Vue {
                     },
                     baseUrl: "https://6zr.github.io/medium/resources/audio/samples/vocal/",
                 }).toDestination();
-                sampler.volume.value = +8;
+                sampler.volume.value = +2;
                 return { char, sampler };
             });
     }
