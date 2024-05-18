@@ -3,7 +3,7 @@
 
     <v-card class="mt-4">
         <v-card-title class="pb-8" v-if="hasLyric">
-            <span class="font-weight-bold">{{lyric}}♪</span>
+            <span class="font-weight-bold">{{rawLyric}}♪</span>
         </v-card-title>
 
         <v-card-subtitle class="pb-1">音階 [{{scale}}]</v-card-subtitle>
@@ -58,6 +58,12 @@
 import { Component, Vue } from 'vue-property-decorator';
 import { Scale } from '../components/Melody/Scale'
 import * as Tone from 'tone'; // @ is an alias to /src
+import {
+    builder,
+    Tokenizer,
+    IpadicFeatures,
+    TokenizerBuilder,
+} from 'kuromoji';
 
 const allScaleList: {
     [key: string]: {
@@ -184,13 +190,15 @@ const hankaku: {
     ',': '・',
 };
 
-const VOICE_CHAR_LIST: string[] = ("あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをがぎぐげござじずぜぞだぢづでどばびぶべぼぱぴぷぺぽぁぃぅぇぉゃゅょん".split(''));
-VOICE_CHAR_LIST.push(...[
+const YOUON = [
     "きゃ", "しゃ", "ちゃ", "にゃ", "ひゃ", "みゃ", "ぎゃ", "じゃ", "びゃ",
     "ぴゃ", "きゅ", "しゅ", "ちゅ", "にゅ", "ひゅ", "みゅ", "ぎゅ", "じゅ",
     "びゅ", "ぴゅ", "きょ", "しょ", "ちょ", "にょ", "ひょ", "みょ", "ぎょ",
-    "じょ", "びょ", "ぴょ", "ふぁ", "ふぃ", "ふぇ", "ふぉ",
-]);
+    "じょ", "びょ", "ぴょ", "ふぁ", "ふぃ", "ふぇ", "ふぉ","ヴァ","ヴィ","ヴェ","ヴォ",
+];
+
+const VOICE_CHAR_LIST: string[] = ("あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをがぎぐげござじずぜぞだぢづでどばびぶべぼぱぴぷぺぽぁぃぅぇぉゃゅょん".split(''));
+VOICE_CHAR_LIST.push(...YOUON);
 
 const octaveArrowsCount = function(octaveArrows: string): number {
     const up =( octaveArrows.match(/↑/g) || []).length;
@@ -201,6 +209,16 @@ const octaveArrowsCount = function(octaveArrows: string): number {
 const uttr = new SpeechSynthesisUtterance();
 uttr.rate = 0.2;
 uttr.pitch = 1.0;
+
+const tokenizeBuilder: TokenizerBuilder<IpadicFeatures> = builder({
+    dicPath: '/medium/resources/kuromoji/dict',
+});
+
+const tokenizer = new Promise<Tokenizer<IpadicFeatures>>(done => {
+    tokenizeBuilder.build((_err, tokenizer) => {
+        done(tokenizer);
+    });
+});
 
 @Component
 export default class extends Vue {
@@ -213,6 +231,8 @@ export default class extends Vue {
     playChord = true;
 
     playVocal = false;
+
+    lyric = '';
 
     samplers: { char: string, sampler: Tone.Sampler }[] = [];
 
@@ -230,7 +250,7 @@ export default class extends Vue {
         return allScaleList[this.scale];
     }
 
-    get lyric() {
+    get rawLyric() {
         if (typeof this.$route.query.lyric !== 'string') {
             return null;
         }
@@ -238,7 +258,7 @@ export default class extends Vue {
     }
 
     get hasLyric() {
-        return this.lyric != null;
+        return this.rawLyric != null;
     }
 
     get lyricCharList() {
@@ -251,8 +271,16 @@ export default class extends Vue {
             const chr = x.charCodeAt(0) - 0x60;
             return String.fromCharCode(chr);
         });
+
         return (chars.match(/.[ぁぃぅぇぉゃゅょァィゥェォャュョ]?/g) || [])
-            .filter((char) => VOICE_CHAR_LIST.indexOf(char) >= 0);
+            .map(char => {
+                if (char.length == 1) { return char; }
+                if (char === 'ゔぁ') { return 'ヴァ'; }
+                if (char === 'ゔぃ') { return 'ヴィ'; }
+                if (char === 'ゔぇ') { return 'ヴェ'; }
+                if (char === 'ゔぉ') { return 'ヴォ'; }
+                return char.charAt(0);
+             });
     }
 
     mounted() {
@@ -269,7 +297,7 @@ export default class extends Vue {
         }, 0);
     }
 
-    play() {
+    async play() {
         this.stop();
         this.updateSongLength();
 
@@ -283,20 +311,22 @@ export default class extends Vue {
             this.setChord();
         }
         if (this.playVocal) {
+            await this.updateLyric();
+            this.setSamplers();
             this.setVocal();
         }
         Tone.Transport.start();
     }
 
     playLyric() {
-        uttr.text = this.lyric || '';
+        uttr.text = this.rawLyric || '';
         window.speechSynthesis.speak(uttr)
 
-        // const lyrics = (this.lyric || '').split('・');
+        // const lyrics = (this.rawLyric || '').split('・');
         // let count = 0;
-        // lyrics.forEach((lyric) => {
+        // lyrics.forEach((rawLyric) => {
         //     window.setTimeout(() => {
-        //         uttr.text = lyric || '';
+        //         uttr.text = rawLyric || '';
         //         window.speechSynthesis.speak(uttr)
         //     }, 1800 + (count * 125))
         //     count = count + lyrics.length + 1;
@@ -356,7 +386,27 @@ export default class extends Vue {
             });
     }
 
+    async updateLyric() {
+        const tokens = await this.tokenize(this.rawLyric || '') || [];
+        const chars = tokens.map(token => {
+            if (token.reading == null || token.reading === '' ) {
+                return token.surface_form;
+            }
+            const replaced = token.surface_form.replace(/[一-龠]/g, 'ふふ');
+            const len = Math.max(0, replaced.length - token.reading.length);
+            return `${token.reading}${'・'.repeat(len)}`;
+        });
+        this.lyric = chars.join('');
+    }
+
+    async tokenize(text: string) : Promise<IpadicFeatures[]> {
+        return (await tokenizer).tokenize(text);
+    }
+
     setVocal() {
+        // console.log(this.lyricCharList);
+        // console.log(this.melodyList);
+
         this.samplers.forEach((sampler) => {
             const melodyLine: {
                 note: string;
@@ -376,8 +426,9 @@ export default class extends Vue {
                         time: `2:${time}`,
                     });
                 }
-                if (item.scale != null && this.lyricCharList[index] != null) {
-                    index = index + 1;
+                // if (item.scale != null && this.lyricCharList[index] != null) {
+                if (this.lyricCharList[index] != null) {
+                    index = index + item.len;
                 }
                 time = time + item.len;
             });
