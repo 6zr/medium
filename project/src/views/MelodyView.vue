@@ -274,12 +274,11 @@ export default class extends Vue {
 
         return (chars.match(/.[ぁぃぅぇぉゃゅょァィゥェォャュョ]?/g) || [])
             .map(char => {
-                if (char.length == 1) { return char; }
                 if (char === 'ゔぁ') { return 'ヴァ'; }
                 if (char === 'ゔぃ') { return 'ヴィ'; }
                 if (char === 'ゔぇ') { return 'ヴェ'; }
                 if (char === 'ゔぉ') { return 'ヴォ'; }
-                return char.charAt(0);
+                return char;
              });
     }
 
