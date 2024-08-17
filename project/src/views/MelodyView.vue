@@ -408,6 +408,7 @@ export default class extends Vue {
         // console.log(this.melodyList);
 
         this.samplers.forEach((sampler) => {
+
             const melodyLine: {
                 note: string;
                 duration: string;
@@ -417,7 +418,14 @@ export default class extends Vue {
             let time = 0;
             let index = 0;
 
+            console.log(this.lyricCharList);
+
             this.melodyList.forEach((item) => {
+                // console.log(item);
+
+                console.log(index);
+                console.log(this.lyricCharList[index]);
+
                 if (item.scale != null && this.lyricCharList[index] === sampler.char) {
                     const duration = (lenList.find(x => item.len === x.len))?.value || '16n';
                     melodyLine.push({
@@ -428,7 +436,7 @@ export default class extends Vue {
                 }
                 // if (item.scale != null && this.lyricCharList[index] != null) {
                 if (this.lyricCharList[index] != null) {
-                    index = index + item.len;
+                    index = index + Math.ceil(item.len);
                 }
                 time = time + item.len;
             });
