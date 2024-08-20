@@ -159,13 +159,22 @@ const ChordList: Chord[] = [
     // { name: 'Am', notes: ['A5', 'C5', 'E5'] },
     // { name: 'Bm(-5)', notes: ['B5', 'D5', 'F5'] },
 
+    { name: 'CM7', notes:    ["B4","C4","E4","G4"] },
+    { name: 'Dm7', notes:    ["A4","C4","D4","F4"] },
+    { name: 'Em7', notes:    ["B4","D4","E4","G4"] },
+    { name: 'FM7', notes:    ["A4","C4","E4","F4"] },
+    { name: 'G7', notes:     ["B4","D4","F4","G4"] },
+    { name: 'Am7', notes:    ["A4","C4","E4","G4"] },
+    { name: 'Bm7(-5)', notes:["A4","B4","D4","F4"] },
+    { name: 'Bm7-5', notes:  ["A4","B4","D4","F4"] },
     { name: 'C', notes: ['C4', 'E4', 'G4'] },
     { name: 'Dm', notes: ['D4', 'F4', 'A4'] },
     { name: 'Em', notes: ['E4', 'G4', 'B4'] },
     { name: 'F', notes: ['C4', 'F4', 'A4'] },
-    { name: 'G', notes: ['D4', 'D4', 'B4'] },
+    { name: 'G', notes: ['D4', 'G4', 'B4'] },
     { name: 'Am', notes: ['C4', 'E4', 'A4'] },
     { name: 'Bm(-5)', notes: ['D4', 'F4', 'B4'] },
+    { name: 'Bm-5', notes: ['D4', 'F4', 'B4'] },
 ];
 
 const lenList = [
