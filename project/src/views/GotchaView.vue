@@ -7,6 +7,18 @@
           <span class="font-weight-bold ml-1">ハッスル・マッスル</span>
           <v-icon small>mdi-music</v-icon>
       </v-btn>
+      <v-btn block color="primary" @click="boot" class="mt-8">
+          <span class="font-weight-bold ml-1">お願いします。テーーイ！</span>
+      </v-btn>
+      <v-btn block color="primary" @click="boot" class="mt-8">
+          <span class="font-weight-bold ml-1">キノコ</span>
+          <v-icon small>mdi-mushroom</v-icon>
+          <span class="font-weight-bold ml-1">生えろ</span>
+      </v-btn>
+      <v-btn block color="primary" @click="boot" class="mt-8">
+          <span class="font-weight-bold ml-1">金はろとねんぞ</span>
+          <v-icon small>mdi-emoticon-angry</v-icon>
+      </v-btn>
     </v-container>
   </div>
 
