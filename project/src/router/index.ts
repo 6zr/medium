@@ -4,6 +4,7 @@ import VueRouter, { RouteConfig } from 'vue-router';
 import HomeView from '../views/HomeView.vue';
 import MelodyView from '../views/MelodyView.vue';
 import GotchaView from '../views/GotchaView.vue';
+import NeoPoseView from '../views/NeoPoseView.vue';
 
 Vue.use(VueRouter)
 
@@ -19,6 +20,10 @@ const routes: Array<RouteConfig> = [
   {
     path: '/gotcha',
     component: GotchaView,
+  },
+  {
+    path: '/neopose',
+    component: NeoPoseView,
   },
 ]
 
