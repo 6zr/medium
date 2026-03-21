@@ -34,15 +34,55 @@
       <v-divider class="mb-4"></v-divider>
     
       <v-subheader>Body Controls</v-subheader>
-      <v-slider v-model="params.tilt" label="首の傾き" min="-45" max="45" thumb-label></v-slider>
-      <v-slider v-model="params.rArm" label="右腕上げ" min="-90" max="90" thumb-label></v-slider>
-      <v-slider v-model="params.lArm" label="左腕上げ" min="-90" max="90" thumb-label></v-slider>
+      
+      <div v-for="(label, key) in bodyControls" :key="key" class="d-flex align-center mb-1">
+        <v-slider
+          v-model="params[key]"
+          :label="label"
+          :min="ranges[key].min"
+          :max="ranges[key].max"
+          :step="ranges[key].step || 1"
+          thumb-label
+          hide-details
+          dense
+          class="flex-grow-1"
+        ></v-slider>
+        <v-btn
+          icon
+          small
+          @click="params.frozen[key] = !params.frozen[key]"
+          :color="params.frozen[key] ? 'error' : 'grey lighten-1'"
+          class="ml-2"
+        >
+          <v-icon small>{{ params.frozen[key] ? 'mdi-lock' : 'mdi-lock-open-variant' }}</v-icon>
+        </v-btn>
+      </div>
     
       <v-divider class="my-4"></v-divider>
     
       <v-subheader>Camera & Scene</v-subheader>
-      <v-slider v-model="params.rot" label="全体回転" min="0" max="360" thumb-label></v-slider>
-      <v-slider v-model="params.zoom" label="ズーム" min="1" max="10" step="0.1" thumb-label></v-slider>
+      <div v-for="(label, key) in sceneControls" :key="key" class="d-flex align-center mb-1">
+        <v-slider
+          v-model="params[key]"
+          :label="label"
+          :min="ranges[key].min"
+          :max="ranges[key].max"
+          :step="ranges[key].step || 1"
+          thumb-label
+          hide-details
+          dense
+          class="flex-grow-1"
+        ></v-slider>
+        <v-btn
+          icon
+          small
+          @click="params.frozen[key] = !params.frozen[key]"
+          :color="params.frozen[key] ? 'error' : 'grey lighten-1'"
+          class="ml-2"
+        >
+          <v-icon small>{{ params.frozen[key] ? 'mdi-lock' : 'mdi-lock-open-variant' }}</v-icon>
+        </v-btn>
+      </div>
     
       <v-divider class="my-4"></v-divider>
     
@@ -52,9 +92,9 @@
         v-if="isDancing"
         v-model="params.danceSpeed" 
         label="ポーズ切り替え間隔" 
-        min="0.5" 
-        max="5" 
-        step="0.1"
+        :min="ranges.danceSpeed.min" 
+        :max="ranges.danceSpeed.max" 
+        :step="ranges.danceSpeed.step"
         thumb-label
       ></v-slider>
 
@@ -130,6 +170,10 @@ export default class PoseSimulator extends Vue {
         tilt: 0, rArm: 0, lArm: 0, rLeg: 0, lLeg: 0,
         lean: 0, sideTilt: 0, rot: 0, zoom: 3, danceSpeed: 2.0,
         showGrid: true, // ガイド線の初期状態
+        frozen: {
+            tilt: false, rArm: false, lArm: false, rLeg: false, lLeg: false,
+            lean: false, sideTilt: false, rot: false, zoom: false
+        }
     };
 
     // --- 描画用の現在値 (Lerpで目標値に近づく) ---
@@ -139,11 +183,19 @@ export default class PoseSimulator extends Vue {
     };
 
     // --- UI設定データ ---
-    private sliderLabels: any = {
-        tilt: '首のかしげ', rArm: '右腕', lArm: '左腕',
-        rLeg: '右足', lLeg: '左足', lean: '体のしなり',
-        sideTilt: '左右の傾き', rot: '回転', zoom: 'ズーム',
-        danceSpeed: 'ダンス速度'
+    private bodyControls: any = {
+        tilt: '首の傾き',
+        rArm: '右腕上げ',
+        lArm: '左腕上げ',
+        rLeg: '右足',
+        lLeg: '左足',
+        lean: '前後のしなり',
+        sideTilt: '左右の傾き'
+    };
+
+    private sceneControls: any = {
+        rot: '全体回転',
+        zoom: 'ズーム'
     };
 
     private ranges: any = {
@@ -249,6 +301,7 @@ export default class PoseSimulator extends Vue {
     public randomize() {
         Object.keys(this.ranges).forEach((key: string) => {
             if (key === 'danceSpeed') return;
+            if (this.params.frozen && this.params.frozen[key]) return; // 固定されている場合はスキップ
             const r = this.ranges[key];
             const val = Math.random() * (r.max - r.min) + r.min;
             this.params[key] = key === 'zoom' ? parseFloat(val.toFixed(1)) : Math.round(val);
