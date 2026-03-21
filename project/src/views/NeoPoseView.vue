@@ -86,7 +86,7 @@
     
       <v-divider class="my-4"></v-divider>
     
-      <v-subheader>Animation</v-subheader>
+      <v-subheader>Animation & Audio</v-subheader>
       <v-switch v-model="isDancing" label="ダンスモード (自動ポーズ)" color="secondary"></v-switch>
       <v-slider 
         v-if="isDancing"
@@ -97,6 +97,23 @@
         :step="ranges.danceSpeed.step"
         thumb-label
       ></v-slider>
+
+      <v-switch 
+        v-model="isAudioEnabled" 
+        label="ポーズ・シンセサイザー" 
+        color="orange"
+        @change="handleAudioToggle"
+      ></v-switch>
+      <v-select
+        v-if="isAudioEnabled"
+        v-model="params.waveform"
+        :items="['sine', 'square', 'sawtooth', 'triangle']"
+        label="波形 (音色)"
+        dense
+        outlined
+        class="mt-2"
+        @change="updateWaveform"
+      ></v-select>
 
       <v-divider class="my-4"></v-divider>
       <v-subheader>Debug Tools</v-subheader>
@@ -160,8 +177,24 @@ export default class PoseSimulator extends Vue {
     // --- UI状態 ---
     private isClosed: boolean = true;
     private isDancing: boolean = false;
+    private isAudioEnabled: boolean = false;
     private lastPoseChangeTime: number = 0;
     private drawer: boolean = false; // 初期状態はメニューを閉じておく
+
+    // --- Audio Nodes ---
+    private audioCtx: AudioContext | null = null;
+    private masterGain: GainNode | null = null;
+    private masterFilter: BiquadFilterNode | null = null;
+    private nextNoteTime: number = 0;
+    private beatCount: number = 0;
+
+    // --- 音階 (C Major Pentatonic) ---
+    private scale: number[] = [
+        130.81, 146.83, 164.81, 196.00, 220.00, // C3, D3, E3, G3, A3
+        261.63, 293.66, 329.63, 392.00, 440.00, // C4, D4, E4, G4, A4
+        523.25, 587.33, 659.25, 783.99, 880.00, // C5, D5, E5, G5, A5
+        1046.50 // C6
+    ];
 
     private axesHelper: THREE.AxesHelper | null = null;
 
@@ -170,6 +203,7 @@ export default class PoseSimulator extends Vue {
         tilt: 0, rArm: 0, lArm: 0, rLeg: 0, lLeg: 0,
         lean: 0, sideTilt: 0, rot: 0, zoom: 3, danceSpeed: 2.0,
         showGrid: true, // ガイド線の初期状態
+        waveform: 'sine',
         frozen: {
             tilt: false, rArm: false, lArm: false, rLeg: false, lLeg: false,
             lean: false, sideTilt: false, rot: false, zoom: false
@@ -308,18 +342,135 @@ export default class PoseSimulator extends Vue {
         });
     }
 
+    private initAudio() {
+        if (this.audioCtx) return;
+        
+        this.audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+        
+        this.masterFilter = this.audioCtx.createBiquadFilter();
+        this.masterFilter.type = 'lowpass';
+        this.masterFilter.Q.value = 1;
+        
+        this.masterGain = this.audioCtx.createGain();
+        this.masterGain.gain.value = 0.5; // 全体の音量
+        
+        this.masterFilter.connect(this.masterGain);
+        this.masterGain.connect(this.audioCtx.destination);
+        
+        this.nextNoteTime = this.audioCtx.currentTime;
+    }
+
+    private handleAudioToggle() {
+        if (this.isAudioEnabled) {
+            this.initAudio();
+            if (this.audioCtx?.state === 'suspended') {
+                this.audioCtx.resume();
+            }
+        }
+    }
+
+    private updateWaveform() {
+        // 現在は playNote 内で params.waveform を参照しているため個別更新は不要
+    }
+
+    private getFreq(index: number): number {
+        const i = Math.max(0, Math.min(this.scale.length - 1, Math.floor(index)));
+        return this.scale[i];
+    }
+
+    private playNote(freq: number, time: number, type: 'melody' | 'drum' = 'melody') {
+        if (!this.audioCtx || !this.masterFilter) return;
+
+        const osc = this.audioCtx.createOscillator();
+        const g = this.audioCtx.createGain();
+        
+        osc.connect(g);
+        g.connect(this.masterFilter);
+
+        if (type === 'melody') {
+            osc.type = this.params.waveform;
+            osc.frequency.setValueAtTime(freq, time);
+            
+            // エンベロープ (音の立ち上がりと消え方)
+            // 腕の上げ具合で「余韻」の長さを変える
+            const release = 0.1 + ((this.current.rArm + this.current.lArm + 60) / 200) * 0.5;
+            
+            g.gain.setValueAtTime(0, time);
+            g.gain.linearRampToValueAtTime(0.2, time + 0.02);
+            g.gain.exponentialRampToValueAtTime(0.001, time + release);
+            
+            osc.start(time);
+            osc.stop(time + release + 0.1);
+        } else {
+            // ドラム (バスドラム的な低い音)
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(150, time);
+            osc.frequency.exponentialRampToValueAtTime(40, time + 0.1);
+            
+            g.gain.setValueAtTime(0, time);
+            g.gain.linearRampToValueAtTime(0.6, time + 0.01);
+            g.gain.exponentialRampToValueAtTime(0.001, time + 0.2);
+            
+            osc.start(time);
+            osc.stop(time + 0.3);
+        }
+    }
+
+    private scheduler() {
+        if (!this.audioCtx || !this.isAudioEnabled || !this.isDancing) return;
+
+        // 1/8拍子ごとにスケジュール (danceSpeedが1ポーズ/2秒なら、8分音符は0.25秒)
+        const secondsPerBeat = (this.params.danceSpeed / 8); 
+        
+        while (this.nextNoteTime < this.audioCtx.currentTime + 0.1) {
+            // 8拍（1サイクル）ごとにポーズをランダム化 (音と同期)
+            if (this.beatCount % 8 === 0) {
+                this.randomize();
+            }
+
+            const c = this.current;
+            
+            // 1. アルペジオ (伴奏: 1/8拍子)
+            const baseIdx = (c.tilt + 45) / 10 + 5;
+            const octaveShift = Math.floor(c.lean / 20) * 2;
+            
+            // 拍数に応じて和音の音を分散させる (0, 2, 4, 7 ...)
+            const chordPattern = [0, 2, 4, 7, 5, 2, 0, -2];
+            const noteIdx = baseIdx + octaveShift + chordPattern[this.beatCount % 8];
+            
+            this.playNote(this.getFreq(noteIdx), this.nextNoteTime, 'melody');
+
+            // 1b. 主旋律 (メロディ: 1/2拍子 = 4ステップごと)
+            // アルペジオより1オクターブ高く、ゆったり鳴らす
+            if (this.beatCount % 4 === 0) {
+                // 首の傾き(tilt)を主旋律の跳躍幅にする
+                const melodyJump = Math.floor(c.tilt / 15);
+                const melodyIdx = baseIdx + octaveShift + 5 + melodyJump; // +5でオクターブ上げ
+                this.playNote(this.getFreq(melodyIdx), this.nextNoteTime, 'melody');
+            }
+
+            // 2. リズム (4拍に1回ドラム)
+            if (this.beatCount % 8 === 0) {
+                this.playNote(60, this.nextNoteTime, 'drum');
+            }
+
+            // 3. フィルター更新 (マスターにかける)
+            const armSum = (c.rArm + c.lArm + 60) / 220; 
+            const cutoff = 600 + (armSum * 4000);
+            this.masterFilter?.frequency.setTargetAtTime(cutoff, this.nextNoteTime, 0.1);
+
+            this.nextNoteTime += secondsPerBeat;
+            this.beatCount++;
+        }
+    }
+
     private animate() {
         // console.log("Looping...");
         requestAnimationFrame(this.animate);
 
-        const now = Date.now() / 1000;
-        if (this.isDancing && now - this.lastPoseChangeTime > this.params.danceSpeed) {
-            this.randomize();
-            this.lastPoseChangeTime = now;
-        }
-
         this.updateLerp();
         this.updateBones();
+        this.scheduler();
 
         if (this.axesHelper) {
             this.axesHelper.visible = this.params.showGrid;
